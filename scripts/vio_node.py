@@ -251,8 +251,12 @@ class OdometryInterface:
 
         visible_ids = set(nf.kps_uv.keys()).intersection(self.odo.state.map3d.keys())
         kp3d_wf = self.kp_in_world_frame(np.array([self.odo.state.map3d[kp_id].pt3d for kp_id in visible_ids]))
-        for pt3d in kp3d_wf:
+        for pt3d, id in zip(kp3d_wf, visible_ids):
             m_pc.points.append(gm.Point32(*pt3d))
+            channel = sm.ChannelFloat32()
+            # vins uses following: unit sphere x, unit sphere y, u, v, feature type
+            channel.values = [np.nan, np.nan, *nf.kps_uv[id], np.nan]
+            m_pc.channels.append(channel)
 
         self.p_akps.publish(m_pc)
 
