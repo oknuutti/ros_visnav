@@ -59,7 +59,7 @@ def main():
     # parser.add_argument('--lon', type=float, default=DEF_LON, help='starting point lon, default %s' % DEF_LON)
     # parser.add_argument('--alt', type=float, default=DEF_ALT, help='starting point alt, default %s' % DEF_ALT)
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     # using other name than 'rosout' doesnt work: https://github.com/ros/ros_comm/issues/1384
     logger = get_logger(None, name='rosout', level=logging.DEBUG)
