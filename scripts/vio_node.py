@@ -163,8 +163,14 @@ class OdometryInterface:
     def frame_handler(self, m_img: sm.Image):
         ts = m_img.header.stamp.secs + m_img.header.stamp.nsecs / 1e9
         h, w = m_img.height, m_img.width
-        assert m_img.step == w and m_img.encoding == 'mono8', 'wrong step size or image encoding'
-        img = np.frombuffer(m_img.data, dtype=np.uint8).reshape((h, w))
+
+        assert (m_img.step == w and m_img.encoding == 'mono8') or \
+               (m_img.step == w * 3 and m_img.encoding == 'bgr8'), 'wrong step size or image encoding'
+
+        if m_img.encoding == 'bgr8':
+            img = np.frombuffer(m_img.data, dtype=np.uint8).reshape((h, w, 3))
+        else:
+            img = np.frombuffer(m_img.data, dtype=np.uint8).reshape((h, w))
 
         nf, *_ = self.odo.process(img, datetime.fromtimestamp(ts), measure=None)
         self.publish_odo(nf)
@@ -191,7 +197,7 @@ class OdometryInterface:
         m_odo = nm.Odometry()
         m_odo.header.stamp = rospy.Time.now()  # or (?): rospy.Time.from_sec(nf.time.timestamp())
         m_odo.header.frame_id = self.vio_frame_id
-        m_odo.child_frame_id = 'world'
+        m_odo.child_frame_id = self.vio_frame_id
         if nf.pose.post is not None:
             wf_pose = self.cam_in_world_frame(nf.pose.post)
             m_odo.pose.pose = gm.Pose(gm.Point(*wf_pose.loc),
